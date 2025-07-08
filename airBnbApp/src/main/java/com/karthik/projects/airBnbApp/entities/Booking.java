@@ -19,22 +19,22 @@ import java.util.Set;
 @AllArgsConstructor
 @Entity
 @Table(name = "bookings")
-public class BookingEntity {
+public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hotel_id",nullable = false)
-    private HotelEntity hotel;
+    private Hotel hotel;
 
     @ManyToOne(fetch  =FetchType.LAZY)
     @JoinColumn(name = "room_id",nullable = false)
-    private RoomEntity room;
+    private Room room;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",nullable = false)
-    private UserEntity userEntity;
+    private User userEntity;
 
     @Column(nullable = false)
     private Integer roomsCount;
@@ -52,7 +52,7 @@ public class BookingEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id")
-    private PaymentEntity paymentEntity;
+    private Payment paymentEntity;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -64,5 +64,5 @@ public class BookingEntity {
             joinColumns = @JoinColumn(name = "booking_id"),
             inverseJoinColumns = @JoinColumn(name = "guest_id")
     )
-    private Set<GuestEntity> guests;
+    private Set<Guest> guests;
 }

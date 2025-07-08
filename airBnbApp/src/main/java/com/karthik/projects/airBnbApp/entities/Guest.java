@@ -4,8 +4,6 @@ import com.karthik.projects.airBnbApp.entities.enums.Gender;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Set;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,7 +11,7 @@ import java.util.Set;
 @Builder
 @Entity
 @Table(name = "guests")
-public class GuestEntity {
+public class Guest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -21,7 +19,7 @@ public class GuestEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private UserEntity userEntity;
+    private User userEntity;
 
     @Column(nullable = false)
     private String name;

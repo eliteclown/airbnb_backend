@@ -16,8 +16,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "hotels")
-public class HotelEntity {
+@Table(name = "hotel")
+public class Hotel {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -27,11 +27,22 @@ public class HotelEntity {
 
     private String city;
 
-    @Column(columnDefinition = "TEXT[]")
+//    @Column(columnDefinition = "TEXT[]")
+//    private List<String> photos;
+//
+//    @Column(columnDefinition = "TEXT[]")
+//    private List<String> amenties;
+
+    @ElementCollection
+    @CollectionTable(name = "hotel_photos", joinColumns = @JoinColumn(name = "hotel_id"))
+    @Column(name = "photo")
     private List<String> photos;
 
-    @Column(columnDefinition = "TEXT[]")
-    private List<String> amenties;
+
+    @ElementCollection
+    @CollectionTable(name = "hotel_amenities", joinColumns = @JoinColumn(name = "hotel_id"))
+    @Column(name = "amenities")
+    private List<String> amenities;
 
     @CreationTimestamp
     @Column(nullable = false,updatable = false)
@@ -41,11 +52,14 @@ public class HotelEntity {
     private LocalDateTime updatedAt;
 
     @Embedded
-    private HotelContactInfoEntity hotelContactInfo;
+    private HotelContactInfo contactInfo;
 
     @Column(nullable = false)
     private Boolean active;
 
     @OneToMany(mappedBy = "hotelEntity")
-    private List<RoomEntity> roomEntities;
+    private List<Room> rooms;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User owner;
 }

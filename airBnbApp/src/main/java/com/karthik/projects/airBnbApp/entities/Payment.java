@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @Builder
 @Entity
 @Table(name = "payments")
-public class PaymentEntity {
+public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

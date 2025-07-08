@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
                 name = "unique_hotel_room_data",
                 columnNames = {"hotel_id","room_id","date"}
         ))
-public class InventoryEnity {
+public class Inventory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -28,11 +28,11 @@ public class InventoryEnity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hotel_id",nullable = false)
-    private HotelEntity hotel;
+    private Hotel hotel;
 
     @ManyToOne(fetch  =FetchType.LAZY)
     @JoinColumn(name = "room_id",nullable = false)
-    private RoomEntity room;
+    private Room room;
 
     @Column(nullable = false)
     private LocalDate date;

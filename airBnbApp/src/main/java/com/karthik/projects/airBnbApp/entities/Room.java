@@ -15,8 +15,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "rooms")
-public class RoomEntity {
+@Table(name = "room")
+public class Room {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -24,7 +24,7 @@ public class RoomEntity {
 
     @ManyToOne // it owns the relatonship
     @JoinColumn(name="hotel_id",nullable=false)
-    private HotelEntity hotelEntity;
+    private Hotel hotelEntity;
 
     @Column(nullable = false)
     private String type;
@@ -32,11 +32,19 @@ public class RoomEntity {
     @Column(nullable = false,precision =  10,scale=2)
     private BigDecimal basePrice;
 
-    @Column(columnDefinition = "TEXT[]")
+//    @Column(columnDefinition = "TEXT[]")
+//    private List<String> photos;
+    @ElementCollection
+    @CollectionTable(name = "room_photos", joinColumns = @JoinColumn(name = "room_id"))
+    @Column(name = "photo")
     private List<String> photos;
 
-    @Column(columnDefinition = "TEXT[]")
-    private List<String> amenties;
+//    @Column(columnDefinition = "TEXT[]")
+//    private List<String> amenties;
+    @ElementCollection
+    @CollectionTable(name = "room_amenities", joinColumns = @JoinColumn(name = "room_id"))
+    @Column(name = "amenities")
+    private List<String> amenities;
 
     @Column(nullable = false)
     private Integer totalCount;
