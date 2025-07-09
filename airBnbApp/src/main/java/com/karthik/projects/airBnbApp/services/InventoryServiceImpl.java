@@ -1,10 +1,13 @@
 package com.karthik.projects.airBnbApp.services;
 
+import com.karthik.projects.airBnbApp.dtos.HotelDTO;
+import com.karthik.projects.airBnbApp.dtos.HotelSearchRequestDTO;
 import com.karthik.projects.airBnbApp.entities.Inventory;
 import com.karthik.projects.airBnbApp.entities.Room;
 import com.karthik.projects.airBnbApp.repositories.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -41,7 +44,13 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public void deleteFutureInventories(Room room) {
         LocalDate today =LocalDate.now();
-        inventoryRepository.deleteByDateAndRoom(today,room);
+        inventoryRepository.deleteByRoom(room);
 
+    }
+
+    @Override
+    public Page<HotelDTO> searchHotels(HotelSearchRequestDTO hotelSearchRequestDTO) {
+
+        return null;
     }
 }
