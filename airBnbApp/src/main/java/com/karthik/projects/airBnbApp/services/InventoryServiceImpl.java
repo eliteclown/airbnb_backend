@@ -49,6 +49,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public void deleteFutureInventories(Room room) {
+        log.info("Deleting the inventories of room with id : {}", room.getId());
         LocalDate today =LocalDate.now();
         inventoryRepository.deleteByRoom(room);
 
@@ -57,8 +58,16 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public Page<HotelDTO> searchHotels(HotelSearchRequestDTO hotelSearchRequestDTO) {
 
+        log.info("searching hotels for {} city,from {} to {}",hotelSearchRequestDTO.getCity(),hotelSearchRequestDTO.getStartDate(),hotelSearchRequestDTO.getEndDate());
+
         Pageable pageable = PageRequest.of(hotelSearchRequestDTO.getPage(), hotelSearchRequestDTO.getSize());
-        Long dateCount = ChronoUnit.DAYS.between(hotelSearchRequestDTO.getStartDate(), hotelSearchRequestDTO.getEndDate()) + 1;
+        LocalDate startDate = hotelSearchRequestDTO.getStartDate();
+        LocalDate endDate = hotelSearchRequestDTO.getEndDate();
+
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("Start date and end date must not be null");
+        }
+        Long dateCount = ChronoUnit.DAYS.between(startDate, endDate) + 1;
 
         Page<Hotel> hotelPage = inventoryRepository.findHotelsWithAvailableInventory(hotelSearchRequestDTO.getCity(),
                 hotelSearchRequestDTO.getStartDate(),hotelSearchRequestDTO.getEndDate(),

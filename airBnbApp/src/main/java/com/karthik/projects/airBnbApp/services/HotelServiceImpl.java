@@ -1,6 +1,8 @@
 package com.karthik.projects.airBnbApp.services;
 
 import com.karthik.projects.airBnbApp.dtos.HotelDTO;
+import com.karthik.projects.airBnbApp.dtos.HotelInfoDTO;
+import com.karthik.projects.airBnbApp.dtos.RoomDTO;
 import com.karthik.projects.airBnbApp.entities.Hotel;
 import com.karthik.projects.airBnbApp.entities.Room;
 import com.karthik.projects.airBnbApp.exceptions.ResourceNotFoundException;
@@ -11,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -87,5 +92,19 @@ public class HotelServiceImpl implements HotelService {
         for(Room room : hotel.getRooms()){
             inventoryService.initializeRoomForAYear(room);
         }
+    }
+
+    @Override
+    public HotelInfoDTO getHotelInfoById(Long hotelId) {
+        Hotel hotel =hotelRepository.
+                findById(hotelId)
+                .orElseThrow(()-> new ResourceNotFoundException("Hotel not found with id: "+hotelId));
+        hotel.setActive(true);
+
+        List<RoomDTO> rooms = hotel.getRooms()
+                .stream()
+                .map(room -> modelMapper.map(room,RoomDTO.class))
+                .collect(Collectors.toList());
+        return  new HotelInfoDTO(modelMapper.map(hotel,HotelDTO.class),rooms);
     }
 }
