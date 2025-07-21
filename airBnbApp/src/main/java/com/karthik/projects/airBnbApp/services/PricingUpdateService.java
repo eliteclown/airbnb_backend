@@ -7,6 +7,7 @@ import com.karthik.projects.airBnbApp.entities.Inventory;
 import com.karthik.projects.airBnbApp.repositories.HotelMinPriceRepository;
 import com.karthik.projects.airBnbApp.repositories.HotelRepository;
 import com.karthik.projects.airBnbApp.repositories.InventoryRepository;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 @Slf4j
+@Transactional
 public class PricingUpdateService {
 
     // Scheduler to update the inventory and HotelMinPrice tables every hour
@@ -34,8 +36,9 @@ public class PricingUpdateService {
     private final HotelMinPriceRepository hotelMinPriceRepository;
     private final PricingService pricingService;
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0/5 * * * * *")
     public void updatePrices(){
+
         int page =0;
         int batchSize =100;
 
