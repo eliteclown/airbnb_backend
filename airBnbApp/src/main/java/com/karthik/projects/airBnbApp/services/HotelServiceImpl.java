@@ -5,13 +5,16 @@ import com.karthik.projects.airBnbApp.dtos.HotelInfoDTO;
 import com.karthik.projects.airBnbApp.dtos.RoomDTO;
 import com.karthik.projects.airBnbApp.entities.Hotel;
 import com.karthik.projects.airBnbApp.entities.Room;
+import com.karthik.projects.airBnbApp.entities.User;
 import com.karthik.projects.airBnbApp.exceptions.ResourceNotFoundException;
+import com.karthik.projects.airBnbApp.exceptions.UnAuthorisedException;
 import com.karthik.projects.airBnbApp.repositories.HotelRepository;
 import com.karthik.projects.airBnbApp.repositories.RoomRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,6 +34,10 @@ public class HotelServiceImpl implements HotelService {
         log.info("Creating a new hotel with name: {}",hotelDTO.getName());
         Hotel hotel=modelMapper.map(hotelDTO,Hotel.class);
         hotel.setActive(false);
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        hotel.setOwner(user);
+
         hotel = hotelRepository.save(hotel);
         log.info("Created a new hotel with ID: {}",hotel.getId());
         return modelMapper.map(hotel,HotelDTO.class);
@@ -39,7 +46,14 @@ public class HotelServiceImpl implements HotelService {
     @Override
     public HotelDTO getHotelById(Long id) {
         log.info("Getting  the  hotel with Id: {}",id);
-        Hotel hotel =hotelRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Hotel not found with id: "+id));
+        Hotel hotel =hotelRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("Hotel not found with id: "+id));
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(!user.equals(hotel.getOwner())){
+            throw new UnAuthorisedException("This user does not own this hotel with id: "+id);
+        }
+
         return modelMapper.map(hotel,HotelDTO.class);
     }
 
@@ -49,6 +63,11 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel =hotelRepository.
                 findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Hotel not found with id: "+id));
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(!user.equals(hotel.getOwner())){
+            throw new UnAuthorisedException("This user does not own this hotel with id: "+id);
+        }
 
         modelMapper.map(hotelDTO,hotel);
         hotel.setId(id);
@@ -62,6 +81,11 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel =hotelRepository.
                 findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Hotel not found with id: "+id));
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(!user.equals(hotel.getOwner())){
+            throw new UnAuthorisedException("This user does not own this hotel with id: "+id);
+        }
 
 
 
@@ -86,6 +110,12 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel =hotelRepository.
                 findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Hotel not found with id: "+id));
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(!user.equals(hotel.getOwner())){
+            throw new UnAuthorisedException("This user does not own this hotel with id: "+id);
+        }
+
         hotel.setActive(true);
 
         // assuming only do it once
@@ -94,12 +124,13 @@ public class HotelServiceImpl implements HotelService {
         }
     }
 
+    //public method
     @Override
     public HotelInfoDTO getHotelInfoById(Long hotelId) {
         Hotel hotel =hotelRepository.
                 findById(hotelId)
                 .orElseThrow(()-> new ResourceNotFoundException("Hotel not found with id: "+hotelId));
-        hotel.setActive(true);
+
 
         List<RoomDTO> rooms = hotel.getRooms()
                 .stream()

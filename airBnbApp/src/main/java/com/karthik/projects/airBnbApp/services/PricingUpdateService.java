@@ -53,10 +53,12 @@ public class PricingUpdateService {
     }
 
     private void updateHotelPrices(Hotel hotel){
+        log.info("Updating hotel prices for hotel ID: {}",hotel.getId());
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = LocalDate.now().plusYears(1);
 
         List<Inventory> inventoryList = inventoryRepository.findByHotelAndDateBetween(hotel,startDate,endDate);
+
         updateInventoryPrices(inventoryList);
         updateHotelMinPrice(hotel,inventoryList,startDate,endDate);
 
