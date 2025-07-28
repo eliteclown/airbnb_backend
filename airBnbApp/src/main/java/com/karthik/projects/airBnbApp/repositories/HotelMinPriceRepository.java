@@ -17,7 +17,7 @@ import java.util.Optional;
 public interface HotelMinPriceRepository extends JpaRepository<HotelMinPrice, Long> {
 
     @Query("""
-            SELECT com.karthik.projects.airBnbApp.dtos.HotelPriceDTO(i.hotel,AVG(i.price))
+            SELECT new com.karthik.projects.airBnbApp.dtos.HotelPriceDTO(i.hotel,AVG(i.price))
             FROM HotelMinPrice i
             WHERE i.hotel.city=:city
                 AND i.date BETWEEN :startDate AND :endDate

@@ -38,6 +38,7 @@ public class InventoryServiceImpl implements InventoryService {
                     .hotel(room.getHotelEntity())
                     .room(room)
                     .bookedCount(0)
+                    .reservedCount(0)
                     .city(room.getHotelEntity().getCity())
                     .date(today)
                     .price(room.getBasePrice())
