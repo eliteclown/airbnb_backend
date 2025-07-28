@@ -31,7 +31,7 @@ public class WebSecurityConfig {
                 .sessionManagement(sessionConfig->sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/admin/**").hasRole("HOTEL_MANAGER")
+                        .requestMatchers("/admin/**").hasAnyRole("HOTEL_MANAGER","GUEST")
                         .requestMatchers("/bookings/**").authenticated()
                         .anyRequest().permitAll()
                 )

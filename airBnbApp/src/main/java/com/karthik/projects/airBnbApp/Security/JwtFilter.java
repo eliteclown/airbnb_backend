@@ -8,19 +8,22 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 
-@Configuration
+@Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     public final JwtService jwtService;
@@ -34,12 +37,13 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try{
+            log.info("JWT Filter triggered for path: " + request.getRequestURI());
             final String requestTokenHeader = request.getHeader("Authorization");
             if(requestTokenHeader==null|| !requestTokenHeader.startsWith("Bearer")){
                 filterChain.doFilter(request,response);
                 return;
             }
-            String token = requestTokenHeader.split("Bearer")[1];
+            String token = requestTokenHeader.substring(7).trim();
             Long userId = jwtService.getUserIdByToken(token);
 
             if(userId!=null && SecurityContextHolder.getContext().getAuthentication() == null){
