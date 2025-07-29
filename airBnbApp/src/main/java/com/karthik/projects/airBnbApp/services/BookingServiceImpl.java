@@ -1,5 +1,6 @@
 package com.karthik.projects.airBnbApp.services;
 
+import com.karthik.projects.airBnbApp.Strategy.PricingService;
 import com.karthik.projects.airBnbApp.dtos.BookingDTO;
 import com.karthik.projects.airBnbApp.dtos.BookingRequestDTO;
 import com.karthik.projects.airBnbApp.dtos.GuestDTO;
@@ -9,11 +10,14 @@ import com.karthik.projects.airBnbApp.exceptions.ResourceNotFoundException;
 
 import com.karthik.projects.airBnbApp.exceptions.UnAuthorisedException;
 import com.karthik.projects.airBnbApp.repositories.*;
+import com.stripe.model.Event;
+import com.stripe.model.checkout.Session;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +35,12 @@ public class BookingServiceImpl implements BookingService {
     private final HotelRepository hotelRepository;
     private final GuestRepository guestRepository;
     private final InventoryRepository inventoryRepository;
+    private final CheckoutService checkoutService;
+    private final PricingService pricingService;
     private  final ModelMapper modelMapper ;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @Override
     @Transactional
@@ -111,6 +120,47 @@ public class BookingServiceImpl implements BookingService {
 
 
         return modelMapper.map(booking, BookingDTO.class);
+    }
+
+    @Override
+    @Transactional
+    public String initiatePayments(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(()-> new ResourceNotFoundException("Booking not found with id:  "+bookingId));
+        User user = getCurrentUser();
+        if(!user.equals(booking.getUserEntity())){
+            throw new UnAuthorisedException("Booking does not belong to this user with id: "+user.getId());
+        }
+
+        if(hasBookingExpired(booking)){
+            throw  new IllegalStateException("Booking has already expired");
+        }
+
+        String sessionUrl = checkoutService.getCheckoutSession(booking,
+                frontendUrl+"/payments/success",frontendUrl+"/payments/failure");
+
+        booking.setBookingStatus(BookingStatus.PAYMENTS_PENDING);
+        bookingRepository.save(booking);
+
+        return sessionUrl;
+    }
+
+    @Override
+    @Transactional
+    public void capturePayments(Event event) {
+        if("checkout.session.completed".equals(event.getType())){
+//           Session session = (Session) event.getDataObjectDeserializer().getObject();
+        }
+    }
+
+    @Override
+    public void cancelBooking(Long bookingId) {
+
+    }
+
+    @Override
+    public String getBookingStatus(Long bookingId) {
+        return "";
     }
 
     public boolean hasBookingExpired(Booking booking){
