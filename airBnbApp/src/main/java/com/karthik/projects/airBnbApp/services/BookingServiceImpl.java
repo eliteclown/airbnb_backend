@@ -10,8 +10,11 @@ import com.karthik.projects.airBnbApp.exceptions.ResourceNotFoundException;
 
 import com.karthik.projects.airBnbApp.exceptions.UnAuthorisedException;
 import com.karthik.projects.airBnbApp.repositories.*;
+import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
+import com.stripe.model.Refund;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.RefundCreateParams;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -149,18 +152,81 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public void capturePayments(Event event) {
         if("checkout.session.completed".equals(event.getType())){
-//           Session session = (Session) event.getDataObjectDeserializer().getObject();
+           Session session = (Session) event.getDataObjectDeserializer().getObject().orElse(null);
+           if(session == null){
+               return;
+           }
+
+           String sessionId = session.getId();
+           Booking booking = bookingRepository.findByPaymentSessionId(sessionId)
+                   .orElseThrow(() -> new ResourceNotFoundException("Booking not found for session ID: "+sessionId));
+
+           booking.setBookingStatus(BookingStatus.CONFIRMED);
+           bookingRepository.save(booking);
+
+           inventoryRepository.findAndLockReservedInventory(booking.getRoom().getId(),booking.getCheckInDate(),
+                   booking.getCheckOutDate(),booking.getRoomsCount());
+
+           inventoryRepository.confirmBooking(booking.getRoom().getId(),booking.getCheckInDate(),
+                   booking.getCheckOutDate(),booking.getRoomsCount());
+
+           log.info("Successfully confirmed the booking for Booking ID: {}",booking.getId());
+
+        }else {
+            log.warn("Unhandled event type: {}",event.getType());
+
         }
     }
 
     @Override
+    @Transactional
     public void cancelBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(()-> new ResourceNotFoundException("Booking not found with id: "+bookingId));
 
+        User user = getCurrentUser();
+        if(!user.equals(booking.getUserEntity())){
+            throw new UnAuthorisedException("Booking does not belong to this user with id: "+user.getId());
+        }
+
+        if(booking.getBookingStatus()!=BookingStatus.CONFIRMED){
+            throw new IllegalStateException("Only confirmed bookings can be cancelled");
+        }
+
+        booking.setBookingStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+
+        inventoryRepository.findAndLockReservedInventory(booking.getRoom().getId(),booking.getCheckInDate(),
+                booking.getCheckOutDate(),booking.getRoomsCount());
+
+        inventoryRepository.cancelBooking(booking.getRoom().getId(),booking.getCheckInDate(),
+                booking.getCheckOutDate(),booking.getRoomsCount());
+
+
+        //handle the refund
+
+        try{
+            Session session = Session.retrieve(booking.getPaymentSessionId());
+            RefundCreateParams refundParams = RefundCreateParams.builder()
+                    .setPaymentIntent(session.getPaymentIntent())
+                    .build();
+            Refund.create(refundParams);
+        }catch (StripeException e){
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public String getBookingStatus(Long bookingId) {
-        return "";
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(()-> new ResourceNotFoundException("Booking not found with id: "+bookingId));
+
+        User user = getCurrentUser();
+        if(!user.equals(booking.getUserEntity())){
+            throw new UnAuthorisedException("Booking does not belong to this user with id: "+user.getId());
+        }
+
+        return booking.getBookingStatus().name();
     }
 
     public boolean hasBookingExpired(Booking booking){
